@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تسجيل الدخول — كاشف</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<style>
+  :root{
+    --pitch-dark:#122A20;
+    --pitch:#1C4633;
+    --pitch-light:#2E6B4C;
+    --chalk:#F5F2E8;
+    --chalk-dim:#E7E2D2;
+    --ink:#15221B;
+    --ink-soft:#4B594F;
+    --gold:#D6A23C;
+    --gold-light:#EAC875;
+    --line:rgba(245,242,232,0.14);
+    --error:#B4483A;
+    --radius-card:14px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'IBM Plex Sans Arabic', sans-serif;
+    background:
+      repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 120px),
+      linear-gradient(180deg, var(--pitch-dark), var(--pitch) 70%, var(--pitch-light));
+    min-height:100vh;
+    color:var(--ink);
+    display:flex; flex-direction:column;
+  }
+  h1,h2,.display{ font-family:'Cairo', sans-serif; font-weight:800; }
+  a{color:inherit; text-decoration:none;}
+
+  .top-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:24px 32px;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Cairo'; font-weight:900; font-size:1.3rem; color:var(--chalk);
+  }
+  .brand .mark{
+    width:32px; height:32px; border-radius:8px; background:var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--pitch-dark); font-weight:900; font-size:1rem;
+  }
+  .back-link{color:var(--chalk-dim); font-size:0.9rem;}
+
+  .center{
+    flex:1; display:flex; align-items:center; justify-content:center;
+    padding:20px 20px 60px;
+  }
+
+  .auth-card{
+    background:var(--chalk); width:100%; max-width:420px;
+    border-radius:var(--radius-card);
+    padding:36px 32px;
+    box-shadow:0 24px 60px rgba(0,0,0,0.35);
+  }
+  .auth-card h1{font-size:1.6rem; color:var(--ink);}
+  .auth-card .sub{color:var(--ink-soft); font-size:0.92rem; margin-top:8px; margin-bottom:28px;}
+
+  .field{margin-bottom:18px;}
+  .field label{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:0.85rem; font-weight:600; color:var(--ink); margin-bottom:7px;
+  }
+  .field label .forgot{font-weight:600; font-size:0.8rem; color:var(--pitch);}
+  .field input{
+    width:100%; padding:12px 14px; border-radius:9px;
+    border:1.5px solid var(--chalk-dim); font-size:0.95rem;
+    font-family:inherit; background:#fff; color:var(--ink);
+    transition:border-color .15s;
+  }
+  .field input:focus{outline:none; border-color:var(--pitch);}
+  .field input.invalid{border-color:var(--error);}
+  .field-error{font-size:0.78rem; color:var(--error); margin-top:6px; display:none;}
+  .field-error.show{display:block;}
+
+  .submit-btn{
+    width:100%; background:var(--gold); color:var(--pitch-dark);
+    border:none; padding:14px; border-radius:9px; font-weight:700;
+    font-size:0.98rem; font-family:inherit; cursor:pointer; margin-top:6px;
+    transition:filter .15s;
+  }
+  .submit-btn:hover{filter:brightness(1.05);}
+
+  .divider{
+    display:flex; align-items:center; gap:12px; margin:24px 0;
+    color:var(--ink-soft); font-size:0.82rem;
+  }
+  .divider::before, .divider::after{content:""; flex:1; height:1px; background:var(--chalk-dim);}
+
+  .switch-line{text-align:center; font-size:0.88rem; color:var(--ink-soft); margin-top:22px;}
+  .switch-line a{color:var(--pitch); font-weight:700;}
+
+  .notice{
+    background:rgba(28,70,51,0.06); border:1px solid rgba(28,70,51,0.18);
+    color:var(--ink-soft); font-size:0.8rem; border-radius:9px;
+    padding:12px 14px; margin-top:22px; line-height:1.65;
+  }
+
+  .top-error{
+    display:none; background:rgba(180,72,58,0.08); border:1px solid rgba(180,72,58,0.25);
+    color:var(--error); font-size:0.85rem; border-radius:9px; padding:11px 14px;
+    margin-bottom:20px;
+  }
+  .top-error.show{display:block;}
+
+  .success-panel{display:none; text-align:center; padding:20px 0 4px;}
+  .success-panel.show{display:block;}
+  .success-panel .check{
+    width:56px; height:56px; border-radius:50%; background:var(--pitch);
+    color:var(--gold-light); display:flex; align-items:center; justify-content:center;
+    margin:0 auto 18px; font-size:1.6rem; font-family:'Cairo'; font-weight:900;
+  }
+  .success-panel h2{font-size:1.25rem; color:var(--ink);}
+  .success-panel p{color:var(--ink-soft); font-size:0.9rem; margin-top:10px; line-height:1.7;}
+
+  @media (max-width:480px){
+    .auth-card{padding:28px 22px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="index.html" class="brand"><span class="mark">ك</span>كاشف</a>
+  <a href="index.html" class="back-link">العودة للرئيسية</a>
+</div>
+
+<div class="center">
+  <div class="auth-card">
+
+    <div id="formView">
+      <h1>تسجيل الدخول</h1>
+      <p class="sub">أهلًا بعودتك، سجّل دخولك لمتابعة رحلتك في كاشف.</p>
+
+      <div class="top-error" id="topError">البريد الإلكتروني أو كلمة المرور غير صحيحة</div>
+
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <label for="email">البريد الإلكتروني</label>
+          <input type="email" id="email" placeholder="example@email.com" autocomplete="email">
+          <div class="field-error" id="emailError">الرجاء إدخال بريد إلكتروني صحيح</div>
+        </div>
+
+        <div class="field">
+          <label for="password">
+            <span>كلمة المرور</span>
+            <a href="#" class="forgot">نسيت كلمة المرور؟</a>
+          </label>
+          <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+          <div class="field-error" id="passwordError">الرجاء إدخال كلمة المرور</div>
+        </div>
+
+        <button type="submit" class="submit-btn">تسجيل الدخول</button>
+      </form>
+
+      <div class="divider">أو</div>
+
+      <div class="switch-line">
+        ما عندك حساب؟ <a href="signup.html">أنشئ حسابًا جديدًا</a>
+      </div>
+
+      <div class="notice">
+        تأكد إنك فعّلت حسابك من رسالة التأكيد المرسلة لبريدك الإلكتروني قبل تسجيل الدخول.
+      </div>
+    </div>
+
+    <div id="successView" class="success-panel">
+      <div class="check">✓</div>
+      <h2>تم تسجيل الدخول</h2>
+      <p>أهلًا بعودتك إلى كاشف.</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('loginForm');
+  const topError = document.getElementById('topError');
+  const fields = {
+    email: { el: document.getElementById('email'), error: document.getElementById('emailError'),
+      validate: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) },
+    password: { el: document.getElementById('password'), error: document.getElementById('passwordError'),
+      validate: v => v.length > 0 }
+  };
+
+  Object.values(fields).forEach(f=>{
+    f.el.addEventListener('input', ()=>{
+      const ok = f.validate(f.el.value);
+      f.el.classList.toggle('invalid', !ok && f.el.value.length > 0);
+      f.error.classList.toggle('show', !ok && f.el.value.length > 0);
+      topError.classList.remove('show');
+    });
+  });
+
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    let allValid = true;
+    Object.values(fields).forEach(f=>{
+      const ok = f.validate(f.el.value);
+      f.el.classList.toggle('invalid', !ok);
+      f.error.classList.toggle('show', !ok);
+      if(!ok) allValid = false;
+    });
+
+    if(!allValid) return;
+
+    const submitBtn = form.querySelector('.submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'جاري تسجيل الدخول...';
+
+    const { error } = await supabaseClient.auth.signInWithPassword({
+      email: fields.email.el.value,
+      password: fields.password.el.value
+    });
+
+    if(error){
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'تسجيل الدخول';
+      topError.textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+      topError.classList.add('show');
+      return;
+    }
+
+    document.getElementById('formView').style.display = 'none';
+    document.getElementById('successView').classList.add('show');
+    setTimeout(()=>{ window.location.href = 'index.html'; }, 1500);
+  });
+</script>
+
+</body>
+</html>

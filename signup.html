@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>إنشاء حساب — كاشف</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<style>
+  :root{
+    --pitch-dark:#122A20;
+    --pitch:#1C4633;
+    --pitch-light:#2E6B4C;
+    --chalk:#F5F2E8;
+    --chalk-dim:#E7E2D2;
+    --ink:#15221B;
+    --ink-soft:#4B594F;
+    --gold:#D6A23C;
+    --gold-light:#EAC875;
+    --line:rgba(245,242,232,0.14);
+    --error:#B4483A;
+    --radius-card:14px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'IBM Plex Sans Arabic', sans-serif;
+    background:
+      repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 120px),
+      linear-gradient(180deg, var(--pitch-dark), var(--pitch) 70%, var(--pitch-light));
+    min-height:100vh;
+    color:var(--ink);
+    display:flex; flex-direction:column;
+  }
+  h1,h2,.display{ font-family:'Cairo', sans-serif; font-weight:800; }
+  a{color:inherit; text-decoration:none;}
+
+  .top-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:24px 32px;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Cairo'; font-weight:900; font-size:1.3rem; color:var(--chalk);
+  }
+  .brand .mark{
+    width:32px; height:32px; border-radius:8px; background:var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--pitch-dark); font-weight:900; font-size:1rem;
+  }
+  .back-link{color:var(--chalk-dim); font-size:0.9rem;}
+
+  .center{
+    flex:1; display:flex; align-items:center; justify-content:center;
+    padding:20px 20px 60px;
+  }
+
+  .auth-card{
+    background:var(--chalk); width:100%; max-width:440px;
+    border-radius:var(--radius-card);
+    padding:36px 32px;
+    box-shadow:0 24px 60px rgba(0,0,0,0.35);
+  }
+  .auth-card h1{font-size:1.6rem; color:var(--ink);}
+  .auth-card .sub{color:var(--ink-soft); font-size:0.92rem; margin-top:8px; margin-bottom:28px;}
+
+  .role-switch{
+    display:flex; background:var(--chalk-dim); border-radius:9px; padding:4px;
+    margin-bottom:24px;
+  }
+  .role-btn{
+    flex:1; text-align:center; padding:9px 0; border-radius:7px;
+    font-size:0.88rem; font-weight:700; color:var(--ink-soft);
+    background:transparent; border:none; cursor:pointer; transition:all .15s;
+  }
+  .role-btn.active{background:var(--chalk); color:var(--pitch); box-shadow:0 1px 3px rgba(0,0,0,0.12);}
+
+  .field{margin-bottom:18px;}
+  .field label{
+    display:block; font-size:0.85rem; font-weight:600; color:var(--ink); margin-bottom:7px;
+  }
+  .field input{
+    width:100%; padding:12px 14px; border-radius:9px;
+    border:1.5px solid var(--chalk-dim); font-size:0.95rem;
+    font-family:inherit; background:#fff; color:var(--ink);
+    transition:border-color .15s;
+  }
+  .field input:focus{outline:none; border-color:var(--pitch);}
+  .field input.invalid{border-color:var(--error);}
+  .field-error{
+    font-size:0.78rem; color:var(--error); margin-top:6px; display:none;
+  }
+  .field-error.show{display:block;}
+  .field-hint{font-size:0.78rem; color:var(--ink-soft); margin-top:6px;}
+
+  .two-col{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+
+  .submit-btn{
+    width:100%; background:var(--gold); color:var(--pitch-dark);
+    border:none; padding:14px; border-radius:9px; font-weight:700;
+    font-size:0.98rem; font-family:inherit; cursor:pointer; margin-top:6px;
+    transition:filter .15s;
+  }
+  .submit-btn:hover{filter:brightness(1.05);}
+
+  .divider{
+    display:flex; align-items:center; gap:12px; margin:24px 0;
+    color:var(--ink-soft); font-size:0.82rem;
+  }
+  .divider::before, .divider::after{content:""; flex:1; height:1px; background:var(--chalk-dim);}
+
+  .switch-line{text-align:center; font-size:0.88rem; color:var(--ink-soft); margin-top:22px;}
+  .switch-line a{color:var(--pitch); font-weight:700;}
+
+  .notice{
+    background:rgba(28,70,51,0.06); border:1px solid rgba(28,70,51,0.18);
+    color:var(--ink-soft); font-size:0.8rem; border-radius:9px;
+    padding:12px 14px; margin-top:22px; line-height:1.65;
+  }
+
+  .success-panel{
+    display:none; text-align:center; padding:20px 0 4px;
+  }
+  .success-panel.show{display:block;}
+  .success-panel .check{
+    width:56px; height:56px; border-radius:50%; background:var(--pitch);
+    color:var(--gold-light); display:flex; align-items:center; justify-content:center;
+    margin:0 auto 18px; font-size:1.6rem; font-family:'Cairo'; font-weight:900;
+  }
+  .success-panel h2{font-size:1.25rem; color:var(--ink);}
+  .success-panel p{color:var(--ink-soft); font-size:0.9rem; margin-top:10px; line-height:1.7;}
+
+  @media (max-width:480px){
+    .auth-card{padding:28px 22px;}
+    .two-col{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="index.html" class="brand"><span class="mark">ك</span>كاشف</a>
+  <a href="index.html" class="back-link">العودة للرئيسية</a>
+</div>
+
+<div class="center">
+  <div class="auth-card">
+
+    <div id="formView">
+      <h1>أنشئ حسابك</h1>
+      <p class="sub">ابدأ رحلتك مع كاشف — سواء كنت لاعبًا أو ناديًا أو أكاديمية.</p>
+
+      <div class="role-switch" id="roleSwitch">
+        <button type="button" class="role-btn active" data-role="player">لاعب</button>
+        <button type="button" class="role-btn" data-role="club">نادٍ / أكاديمية</button>
+      </div>
+
+      <form id="signupForm" novalidate>
+        <div class="field">
+          <label for="fullName">الاسم الكامل</label>
+          <input type="text" id="fullName" placeholder="اكتب اسمك الكامل" autocomplete="name">
+          <div class="field-error" id="fullNameError">الرجاء إدخال الاسم الكامل</div>
+        </div>
+
+        <div class="field">
+          <label for="email">البريد الإلكتروني</label>
+          <input type="email" id="email" placeholder="example@email.com" autocomplete="email">
+          <div class="field-error" id="emailError">الرجاء إدخال بريد إلكتروني صحيح</div>
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label for="password">كلمة المرور</label>
+            <input type="password" id="password" placeholder="••••••••" autocomplete="new-password">
+            <div class="field-hint">8 أحرف على الأقل</div>
+            <div class="field-error" id="passwordError">كلمة المرور قصيرة جدًا</div>
+          </div>
+          <div class="field">
+            <label for="confirmPassword">تأكيد كلمة المرور</label>
+            <input type="password" id="confirmPassword" placeholder="••••••••" autocomplete="new-password">
+            <div class="field-error" id="confirmPasswordError">كلمتا المرور غير متطابقتين</div>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn">إنشاء الحساب</button>
+      </form>
+
+      <div class="divider">أو</div>
+
+      <div class="switch-line">
+        عندك حساب مسبقًا؟ <a href="login.html">سجّل دخولك</a>
+      </div>
+
+      <div class="notice">
+        بعد إنشاء الحساب بتصلك رسالة تأكيد على بريدك الإلكتروني. لازم تفتحها وتضغط رابط التفعيل قبل تسجيل الدخول.
+      </div>
+    </div>
+
+    <div id="successView" class="success-panel">
+      <div class="check">✓</div>
+      <h2>تم إنشاء الحساب بنجاح</h2>
+      <p id="successMessage">أهلًا بك في كاشف. حسابك جاهز الآن لإكمال ملفك الشخصي.</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let selectedRole = 'player';
+
+  document.querySelectorAll('.role-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedRole = btn.dataset.role;
+      document.getElementById('fullName').placeholder =
+        selectedRole === 'club' ? 'اسم النادي أو الأكاديمية' : 'اكتب اسمك الكامل';
+    });
+  });
+
+  const form = document.getElementById('signupForm');
+  const fields = {
+    fullName: { el: document.getElementById('fullName'), error: document.getElementById('fullNameError'),
+      validate: v => v.trim().length >= 3 },
+    email: { el: document.getElementById('email'), error: document.getElementById('emailError'),
+      validate: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) },
+    password: { el: document.getElementById('password'), error: document.getElementById('passwordError'),
+      validate: v => v.length >= 8 },
+    confirmPassword: { el: document.getElementById('confirmPassword'), error: document.getElementById('confirmPasswordError'),
+      validate: v => v === fields.password.el.value }
+  };
+
+  Object.values(fields).forEach(f=>{
+    f.el.addEventListener('input', ()=>{
+      const ok = f.validate(f.el.value);
+      f.el.classList.toggle('invalid', !ok && f.el.value.length > 0);
+      f.error.classList.toggle('show', !ok && f.el.value.length > 0);
+    });
+  });
+
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    let allValid = true;
+    Object.values(fields).forEach(f=>{
+      const ok = f.validate(f.el.value);
+      f.el.classList.toggle('invalid', !ok);
+      f.error.classList.toggle('show', !ok);
+      if(!ok) allValid = false;
+    });
+
+    if(!allValid) return;
+
+    const submitBtn = form.querySelector('.submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'جاري إنشاء الحساب...';
+
+    const { data, error } = await supabaseClient.auth.signUp({
+      email: fields.email.el.value,
+      password: fields.password.el.value
+    });
+
+    if(error){
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'إنشاء الحساب';
+      alert('حدث خطأ: ' + error.message);
+      return;
+    }
+
+    // إنشاء الملف الشخصي المرتبط بالحساب
+    if(data.user){
+      await supabaseClient.from('profiles').insert({
+        id: data.user.id,
+        full_name: fields.fullName.el.value,
+        role: selectedRole
+      });
+    }
+
+    document.getElementById('formView').style.display = 'none';
+    const successView = document.getElementById('successView');
+    successView.classList.add('show');
+    document.getElementById('successMessage').textContent =
+      selectedRole === 'club'
+        ? 'أهلًا بكم في كاشف. تحققوا من بريدكم الإلكتروني لتفعيل الحساب.'
+        : 'أهلًا بك في كاشف. تحقق من بريدك الإلكتروني لتفعيل حسابك.';
+  });
+</script>
+
+</body>
+</html>
